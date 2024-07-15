@@ -1,5 +1,4 @@
 from typing import List, Optional, Tuple, Union
-
 import torch
 from torch import Tensor
 
@@ -71,16 +70,16 @@ if torch_geometric.typing.WITH_PT112:  # pragma: no cover
 
         # For "sum" and "mean" reduction, we make use of `scatter_add_`:
         if reduce == 'sum' or reduce == 'add':
-            index = broadcast(index, src, dim)
-            return src.new_zeros(size).scatter_add_(dim, index, src)
+            # index = broadcast(index, src, dim)
+            return src.new_zeros(size).index_add_(dim, index, src)
 
         if reduce == 'mean':
             count = src.new_zeros(dim_size)
-            count.scatter_add_(0, index, src.new_ones(src.size(dim)))
+            count.index_add_(0, index, src.new_ones(src.size(dim)))
             count = count.clamp(min=1)
 
-            index = broadcast(index, src, dim)
-            out = src.new_zeros(size).scatter_add_(dim, index, src)
+            # index = broadcast(index, src, dim)
+            out = src.new_zeros(size).index_add_(dim, index, src)
 
             return out / broadcast(count, out, dim)
 
@@ -96,8 +95,8 @@ if torch_geometric.typing.WITH_PT112:  # pragma: no cover
                                   f"can be accelerated via the 'torch-scatter'"
                                   f" package, but it was not found")
 
-                index = broadcast(index, src, dim)
-                return src.new_zeros(size).scatter_reduce_(
+                # index = broadcast(index, src, dim)
+                return src.new_zeros(size).index_reduce_(
                     dim, index, src, reduce=f'a{reduce[-3:]}',
                     include_self=False)
 
@@ -114,9 +113,9 @@ if torch_geometric.typing.WITH_PT112:  # pragma: no cover
                                   f"can be accelerated via the 'torch-scatter'"
                                   f" package, but it was not found")
 
-                index = broadcast(index, src, dim)
+                # index = broadcast(index, src, dim)
                 # We initialize with `one` here to match `scatter_mul` output:
-                return src.new_ones(size).scatter_reduce_(
+                return src.new_ones(size).index_reduce_(
                     dim, index, src, reduce='prod', include_self=True)
 
             return torch_scatter.scatter(src, index, dim, dim_size=dim_size,
